@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: forward
+  name: forward
+  namespace: tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forward
+  template:
+    metadata:
+      labels:
+        app: forward
+      annotations:
+        proxy.istio.io/config: |
+          tracing:
+            sampling: 100.0
+            zipkin:
+              address: jaeger-all-in-one-collector.observability.svc.cluster.local:9411
+    spec:
+      containers:
+      - image: lawrencequantexa/forward:0.0.4
+        name: forward
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: forward
+  name: forward
+  namespace: tracing
+spec:
+  ports:
+  - name: 80-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: forward
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: forward-vs
+spec:
+  hosts:
+  - tracing-demo.com
+  gateways:
+    - istio-system/tracing-gateway 
+  http:
+  - name: forward-default
+    route:
+    - destination:
+        host: forward.tracing.svc.cluster.local
+        port:
+          number: 80

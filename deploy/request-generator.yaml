@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: request-generator
+  name: request-generator
+spec:
+  containers:
+  - image: alpine
+    name: request-generator
+    command: ["sleep"]
+    args: ["3600"] 

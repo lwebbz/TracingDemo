@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: return
+  name: return
+  namespace: tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: return
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: return
+      annotations:
+        proxy.istio.io/config: |
+          tracing:
+            sampling: 100.0
+            zipkin:
+              address: jaeger-all-in-one-collector.observability.svc.cluster.local:9411
+    spec:
+      containers:
+      - image: lawrencequantexa/return:0.0.4
+        name: return
+        resources: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: return
+  name: return
+  namespace: tracing
+spec:
+  ports:
+  - name: 80-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: return
+  type: ClusterIP
